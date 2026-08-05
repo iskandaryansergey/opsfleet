@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-spot-graceful
+  labels:
+    app: nginx-spot-graceful
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-spot-graceful
+  template:
+    metadata:
+      labels:
+        app: nginx-spot-graceful
+    spec:
+      terminationGracePeriodSeconds: 120
+      nodeSelector:
+        karpenter.sh/capacity-type: spot
+      containers:
+        - name: nginx
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh", "-c", "sleep 15 && nginx -s quit"]
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: nginx-spot-graceful
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: nginx-spot-graceful
