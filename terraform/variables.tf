@@ -109,7 +109,7 @@ variable "system_node_desired_size" {
 variable "karpenter_version" {
   description = "Version of the Karpenter Helm chart to deploy"
   type        = string
-  default     = "1.3.3"
+  default     = "1.14.0"
 }
 
 variable "enable_monitoring" {
